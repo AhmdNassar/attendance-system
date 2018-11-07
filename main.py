@@ -4,6 +4,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from faceDetect import Face_detector as fc
 
 def creatData():
     if not os.path.exists("attendance-data"):
@@ -19,6 +20,7 @@ def appendData(id,name,path):
     df = pd.read_csv("attendance-data\\data.csv")
     df.loc[id-1] = data
     df.to_csv("attendance-data\\data.csv",index=False)
+
 
 def takePic(name):
     df = pd.read_csv("attendance-data\\data.csv")
@@ -43,8 +45,14 @@ def takePic(name):
         elif key%256 == 13:
             imgName = "{}-pic-{}.png".format(name,imageCounter+1)
             cv2.imwrite(os.path.join(path,imgName),frame)
-            print("image {} saved".format(imgName))
-            imageCounter+=1
+            isFace = faceCheck.isFace(os.path.join(path,imgName))
+            if(isFace=="Accepted Image"):
+                imageCounter+=1
+                print("image {} saved".format(imgName))
+            else:
+                #os.remove(os.path.join(path,imgName))
+                print(isFace,"please try again!")
+            
     cam.release()
     cv2.destroyAllWindows()
     return id,path
@@ -57,6 +65,8 @@ def showAllData():
         print("there are no data to show please enter some users first!")
         exit(0)
     print(df)
+    print("\n..................................................\n")
+
 
 def showUserPic(id):
 
@@ -79,27 +89,34 @@ def showUserPic(id):
         img = mpimg.imread(imagesPath+'\\'+i)
         axeslist.ravel()[ind].imshow(img)
     plt.show()
+    print("\n..................................................\n")
+
 
 def addNewUser():
     name = str(input("Enter new user name : "))
     id,path=takePic(name)
     appendData(id,name,path)
     print("new user added !\nID:{}, name:{}".format(id,name))
+    print("\n..................................................\n")
+
 
 def main():
     creatData()
-    task = int(input("enter num of what you want to do?\n1)Add new use ?,  2)show All data ? , 3)plot user pic? , , 4)quit : "))
-    while(task>4):
-        task = int(input("wrong num! please enter num of option you want to do \n1)Add new use ?,  2)show All data ? , 3)plot user pic? , 4)quit "))
-    if(task==1):
-        addNewUser()
-    elif(task==2):
-        showAllData()
-    elif(task==3):
-        id = int(input("enter user Id: "))
-        showUserPic(id)
-    else:
-        exit(0)
+    while(True):
+        task = int(input("enter num of what you want to do?\n1)Add new use ?,  2)show All data ? , 3)plot user pic? , , 4)quit : "))
+        while(task>4) or task<0:
+            task = int(input("wrong num! please enter num of option you want to do \n1)Add new use ?,  2)show All data ? , 3)plot user pic? , 4)quit "))
+        if(task==1):
+            addNewUser()
+        elif(task==2):
+            showAllData()
+        elif(task==3):
+            id = int(input("enter user Id: "))
+            showUserPic(id)
+        else:
+            exit(0)
+
 
 if __name__== "__main__":
-  main()
+    faceCheck = fc() # declare global opject of face detector class  
+    main()
