@@ -86,7 +86,7 @@ def takePic(name):
         key = cv2.waitKey(1) & 0xFF
         # break if 5 pics saved 
         if imageCounter==5:
-            print("thank you your 5 photos saved!")
+            print("thank you, your 5 photos saved!")
             break
         # wait for user to press ENTER or 0 or d key 
         elif key%256 == 13:
@@ -178,7 +178,7 @@ def addNewUser():
 
     print(imagesNames[0])
     test = cv2.imread(imagesNames[0],1)
-    print(test)
+    test = cv2.cvtColor(test,cv2.COLOR_BGR2RGB)
     newMeta = np.array(features.decode_single_image(test)).reshape((1,128))
     print("meta shape is : ",newMeta.shape)
     if not first:
@@ -194,9 +194,14 @@ def addNewUser():
     print("\n..................................................\n")
 
 def predict():
-    currentMetaData = np.load("attendance-data\\metaData\\allMeta.npy")
+    # we may open cam to predict while there are no data! 
+    # and sys will crash in this case so we need to check first there are data of not to avoid sys crash 
     currentUserInfo = pd.read_csv("attendance-data\\data.csv")
     names = currentUserInfo['Name']
+    weHaveData = False
+    if(len(names)!=0):
+        currentMetaData = np.load("attendance-data\\metaData\\allMeta.npy")
+        weHaveData = True
     cam = cv2.VideoCapture(0)
     cam.get(cv2.CAP_PROP_FPS)
     while(True):
@@ -209,10 +214,11 @@ def predict():
                 dist = 10
                 name = ""
                 cv2.rectangle(frame,(x,y),(x+w,y+h),(0,0,255),1)
-                currentFrame = np.array(features.decode_single_image(frame[y:y+h,x:x+w]).reshape((1,128)))
-                dist , ind = features.getIndex(currentFrame,currentMetaData)
+                currentFrame = np.array(features.decode_single_image(cv2.cvtColor(frame[y:y+h,x:x+w],cv2.COLOR_BGR2RGB)).reshape((1,128)))
+                if(weHaveData):
+                    dist , ind = features.getIndex(currentFrame,currentMetaData)
                 font = cv2.FONT_HERSHEY_SIMPLEX
-                if(dist<0.5):
+                if(dist<0.01):
                     name = names[ind]
                 else:
                     name = "Nan!!"
@@ -238,7 +244,7 @@ def main():
     creatData()
     while(True):
         task=""
-        task = (input("enter num of what you want to do?\n1)Add new use ?,  2)show All data ? , 3)plot user pic? , 4)quit : "))
+        task = (input("enter num of what you want to do?\n1)Add new use ?,  2)show All data ? , 3)plot user pic? ,4)Predict from cam? ,5)quit : "))
         if(task=='1'):
             addNewUser()
             a = np.load("attendance-data\\metaData\\allMeta.npy")
@@ -248,14 +254,11 @@ def main():
         elif(task=='3'):
             id = int(input("enter user Id: "))
             showUserPic(id)
-        elif (task=='4'):
+        elif(task=='4'):
+            predict()
+        elif (task=='5'):
             print("exit..")
             exit(0)
-        elif(task=='5'):
-            """test = "attendance-data\\2 - ahmed2\\ahmed2-pic-2.png"
-            re = "attendance-data\\metaData\\2.npy"
-            features.test(test,re)"""
-            predict()
 
         else:
             task = (input("wrong num! please enter num of option you want to do \n1)Add new use ?,  2)show All data ? , 3)plot user pic? , 4)quit : "))
@@ -265,36 +268,3 @@ if __name__== "__main__":
     faceCheck = fc() # declare global object of face detector class  
     features = decoder()
     main()
-    #img = cv2.imread("trainingData\\Gerhard_Schroeder\\Gerhard_Schroeder_0007.jpg")
-    """
-    img = cv2.imread("attendance-data\\2 - ayman\\ayman-pic-4.png")
-    grayImage = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-    faces = faceCheck.haar_cascade.detectMultiScale(grayImage,scaleFactor=1.1,minNeighbors=5)
-    x,y,w,h = faces[0]
-    img = cv2.resize( img[y:y+h,x:x+w],(96,96))
-    cv2.imshow('image1',img)
-    img= img[...,::-1]/255
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    
-    
-    img2 = cv2.imread("E:\\me\\my pic\\DSCN3534.jpg")
-    grayImage = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY)
-    faces = faceCheck.haar_cascade.detectMultiScale(grayImage,scaleFactor=1.1,minNeighbors=5)
-    x,y,w,h = faces[0]
-    img2 = cv2.resize( img2[y:y+h,x:x+w],(96,96))
-    cv2.imshow('image2',img2)
-    img2 = img2[...,::-1]/255
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-    """
-    #img2 = np.load("attendance-data\\metaData\\allMeta.npy")
-
-    #img = cv2.imread("attendance-data\\trainingData\Ariel_Sharon\\Ariel_Sharon_0001.jpg")
-    #img2 = cv2.imread("attendance-data\\trainingData\Ariel_Sharon\\Ariel_Sharon_0003.jpg")
-    #img2 = np.load("attendance-data\\metaData\\allMeta.npy")
-    features.test(img,img2)
-    """
-a = np.load("attendance-data\\metaData\\allMeta.npy")
-print(a.shape)
-"""
